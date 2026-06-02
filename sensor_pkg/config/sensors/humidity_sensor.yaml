@@ -1,0 +1,26 @@
+humidity_sensor_node:
+  ros__parameters:
+    port: "/dev/ttyUSB0"
+    baudrate: 9600
+    parity: "N"
+    data_bits: 8
+    stop_bits: 1
+    slave_id: 7
+    read_register: 0
+    register_count: 1
+    scale: 0.1
+    offset: 0.0
+    signed_value: false
+    alarm_when_nonzero: false
+    warning_threshold: 80.0
+    alarm_threshold: 90.0
+    enabled: true
+    response_timeout_ms: 1000
+    poll_interval_ms: 5000
+    bus_lock_file: "/tmp/rs485_modbus_bus.lock"
+    sensor_name: "Humidity"
+    sensor_model: "RT WS N01 QT"
+    quantity: "relative_humidity"
+    unit: "%RH"
+    topic_name: "/sensors/humidity"
+    notes: "Assumed RS-WS-N01-compatible humidity register 0x0000 with scale 0.1 %RH."

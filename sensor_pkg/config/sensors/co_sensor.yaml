@@ -1,0 +1,26 @@
+co_sensor_node:
+  ros__parameters:
+    port: "/dev/ttyUSB0"
+    baudrate: 9600
+    parity: "N"
+    data_bits: 8
+    stop_bits: 1
+    slave_id: 1
+    read_register: 2
+    register_count: 1
+    scale: 1.0
+    offset: 0.0
+    signed_value: false
+    alarm_when_nonzero: false
+    warning_threshold: 35.0
+    alarm_threshold: 100.0
+    enabled: true
+    response_timeout_ms: 1000
+    poll_interval_ms: 5000
+    bus_lock_file: "/tmp/rs485_modbus_bus.lock"
+    sensor_name: "CO"
+    sensor_model: "ES-CO-01"
+    quantity: "carbon_monoxide"
+    unit: "ppm"
+    topic_name: "/sensors/co"
+    notes: "CO value at register 0x0002."
