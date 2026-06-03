@@ -3,7 +3,6 @@
 #include <cstdint>
 #include <memory>
 #include <string>
-#include <vector>
 
 #include "rclcpp/rclcpp.hpp"
 #include "interfaces/msg/sensor.hpp"
@@ -40,19 +39,7 @@ private:
   void smoke_callback(const SensorMsg::SharedPtr msg);
 
   void print_summary();
-
   std::string format_value(const SensorSnapshot & snapshot) const;
-
-  std::string evaluate_high_threshold_status(
-    const SensorSnapshot & snapshot,
-    double warn_threshold,
-    double alarm_threshold) const;
-
-  std::string evaluate_low_threshold_status(
-    const SensorSnapshot & snapshot,
-    double warn_threshold,
-    double alarm_threshold) const;
-
   std::string smoke_status() const;
 
   int summary_interval_ms_;
@@ -65,19 +52,6 @@ private:
   std::string co_topic_;
   std::string o2_topic_;
   std::string smoke_topic_;
-
-  double ch4_warn_;
-  double ch4_alarm_;
-  double co2_warn_;
-  double co2_alarm_;
-  double h2s_warn_;
-  double h2s_alarm_;
-  double co_warn_;
-  double co_alarm_;
-  double o2_warn_low_;
-  double o2_alarm_low_;
-  double humidity_warn_;
-  double humidity_alarm_;
 
   SensorSnapshot ch4_;
   SensorSnapshot co2_;

@@ -14,86 +14,54 @@ SensorMonitorNode::SensorMonitorNode()
 {
   this->declare_parameter<int>("summary_interval_ms", 5000);
 
-  this->declare_parameter<std::string>("ch4_topic", "/sensors/ch4");
-  this->declare_parameter<std::string>("co2_topic", "/sensors/co2");
-  this->declare_parameter<std::string>("temperature_topic", "/sensors/temperature");
-  this->declare_parameter<std::string>("humidity_topic", "/sensors/humidity");
-  this->declare_parameter<std::string>("h2s_topic", "/sensors/h2s");
-  this->declare_parameter<std::string>("co_topic", "/sensors/co");
-  this->declare_parameter<std::string>("o2_topic", "/sensors/o2");
-  this->declare_parameter<std::string>("smoke_topic", "/sensors/smoke_fire_alarm");
+  const auto ch4_topic = this->declare_parameter<std::string>("ch4_topic", "/sensors/ch4");
+  const auto co2_topic = this->declare_parameter<std::string>("co2_topic", "/sensors/co2");
+  const auto temperature_topic =
+    this->declare_parameter<std::string>("temperature_topic", "/sensors/temperature");
+  const auto humidity_topic =
+    this->declare_parameter<std::string>("humidity_topic", "/sensors/humidity");
+  const auto h2s_topic = this->declare_parameter<std::string>("h2s_topic", "/sensors/h2s");
+  const auto co_topic = this->declare_parameter<std::string>("co_topic", "/sensors/co");
+  const auto o2_topic = this->declare_parameter<std::string>("o2_topic", "/sensors/o2");
+  const auto smoke_topic =
+    this->declare_parameter<std::string>("smoke_topic", "/sensors/smoke_fire_alarm");
 
-  this->declare_parameter<double>("ch4_warn", 10.0);
-  this->declare_parameter<double>("ch4_alarm", 20.0);
-  this->declare_parameter<double>("co2_warn", 1000.0);
-  this->declare_parameter<double>("co2_alarm", 2000.0);
-  this->declare_parameter<double>("h2s_warn", 5.0);
-  this->declare_parameter<double>("h2s_alarm", 10.0);
-  this->declare_parameter<double>("co_warn", 35.0);
-  this->declare_parameter<double>("co_alarm", 100.0);
-  this->declare_parameter<double>("o2_warn_low", 20.0);
-  this->declare_parameter<double>("o2_alarm_low", 19.5);
-  this->declare_parameter<double>("humidity_warn", 80.0);
-  this->declare_parameter<double>("humidity_alarm", 90.0);
-
-  summary_interval_ms_ = this->get_parameter("summary_interval_ms").as_int();
-
-  ch4_topic_ = this->get_parameter("ch4_topic").as_string();
-  co2_topic_ = this->get_parameter("co2_topic").as_string();
-  temperature_topic_ = this->get_parameter("temperature_topic").as_string();
-  humidity_topic_ = this->get_parameter("humidity_topic").as_string();
-  h2s_topic_ = this->get_parameter("h2s_topic").as_string();
-  co_topic_ = this->get_parameter("co_topic").as_string();
-  o2_topic_ = this->get_parameter("o2_topic").as_string();
-  smoke_topic_ = this->get_parameter("smoke_topic").as_string();
-
-  ch4_warn_ = this->get_parameter("ch4_warn").as_double();
-  ch4_alarm_ = this->get_parameter("ch4_alarm").as_double();
-  co2_warn_ = this->get_parameter("co2_warn").as_double();
-  co2_alarm_ = this->get_parameter("co2_alarm").as_double();
-  h2s_warn_ = this->get_parameter("h2s_warn").as_double();
-  h2s_alarm_ = this->get_parameter("h2s_alarm").as_double();
-  co_warn_ = this->get_parameter("co_warn").as_double();
-  co_alarm_ = this->get_parameter("co_alarm").as_double();
-  o2_warn_low_ = this->get_parameter("o2_warn_low").as_double();
-  o2_alarm_low_ = this->get_parameter("o2_alarm_low").as_double();
-  humidity_warn_ = this->get_parameter("humidity_warn").as_double();
-  humidity_alarm_ = this->get_parameter("humidity_alarm").as_double();
+  const int summary_interval_ms = this->get_parameter("summary_interval_ms").as_int();
 
   ch4_sub_ = this->create_subscription<SensorMsg>(
-    ch4_topic_, 10,
-    [this](const SensorMsg::SharedPtr msg) { ch4_callback(msg); });
+    ch4_topic, 10,
+    [this](const SensorMsg::SharedPtr msg) { update_snapshot(ch4_, msg); });
 
   co2_sub_ = this->create_subscription<SensorMsg>(
-    co2_topic_, 10,
-    [this](const SensorMsg::SharedPtr msg) { co2_callback(msg); });
+    co2_topic, 10,
+    [this](const SensorMsg::SharedPtr msg) { update_snapshot(co2_, msg); });
 
   temperature_sub_ = this->create_subscription<SensorMsg>(
-    temperature_topic_, 10,
-    [this](const SensorMsg::SharedPtr msg) { temperature_callback(msg); });
+    temperature_topic, 10,
+    [this](const SensorMsg::SharedPtr msg) { update_snapshot(temperature_, msg); });
 
   humidity_sub_ = this->create_subscription<SensorMsg>(
-    humidity_topic_, 10,
-    [this](const SensorMsg::SharedPtr msg) { humidity_callback(msg); });
+    humidity_topic, 10,
+    [this](const SensorMsg::SharedPtr msg) { update_snapshot(humidity_, msg); });
 
   h2s_sub_ = this->create_subscription<SensorMsg>(
-    h2s_topic_, 10,
-    [this](const SensorMsg::SharedPtr msg) { h2s_callback(msg); });
+    h2s_topic, 10,
+    [this](const SensorMsg::SharedPtr msg) { update_snapshot(h2s_, msg); });
 
   co_sub_ = this->create_subscription<SensorMsg>(
-    co_topic_, 10,
-    [this](const SensorMsg::SharedPtr msg) { co_callback(msg); });
+    co_topic, 10,
+    [this](const SensorMsg::SharedPtr msg) { update_snapshot(co_, msg); });
 
   o2_sub_ = this->create_subscription<SensorMsg>(
-    o2_topic_, 10,
-    [this](const SensorMsg::SharedPtr msg) { o2_callback(msg); });
+    o2_topic, 10,
+    [this](const SensorMsg::SharedPtr msg) { update_snapshot(o2_, msg); });
 
   smoke_sub_ = this->create_subscription<SensorMsg>(
-    smoke_topic_, 10,
+    smoke_topic, 10,
     [this](const SensorMsg::SharedPtr msg) { smoke_callback(msg); });
 
   summary_timer_ = this->create_wall_timer(
-    std::chrono::milliseconds(summary_interval_ms_),
+    std::chrono::milliseconds(summary_interval_ms),
     [this]() { print_summary(); });
 }
 
@@ -108,51 +76,15 @@ void SensorMonitorNode::update_snapshot(
   snapshot.alarm = msg->alarm;
 }
 
-void SensorMonitorNode::ch4_callback(const SensorMsg::SharedPtr msg)
-{
-  update_snapshot(ch4_, msg);
-}
-
-void SensorMonitorNode::co2_callback(const SensorMsg::SharedPtr msg)
-{
-  update_snapshot(co2_, msg);
-}
-
-void SensorMonitorNode::temperature_callback(const SensorMsg::SharedPtr msg)
-{
-  update_snapshot(temperature_, msg);
-}
-
-void SensorMonitorNode::humidity_callback(const SensorMsg::SharedPtr msg)
-{
-  update_snapshot(humidity_, msg);
-}
-
-void SensorMonitorNode::h2s_callback(const SensorMsg::SharedPtr msg)
-{
-  update_snapshot(h2s_, msg);
-}
-
-void SensorMonitorNode::co_callback(const SensorMsg::SharedPtr msg)
-{
-  update_snapshot(co_, msg);
-}
-
-void SensorMonitorNode::o2_callback(const SensorMsg::SharedPtr msg)
-{
-  update_snapshot(o2_, msg);
-}
-
 void SensorMonitorNode::smoke_callback(const SensorMsg::SharedPtr msg)
 {
   update_snapshot(smoke_, msg);
 
-  // Giữ nguyên ưu tiên báo liên tục khi có cảnh báo/cháy
+  // Nếu rơi vào cảnh báo thì báo liên tục
   if (smoke_.available && (smoke_.raw_value != 0 || smoke_.alarm)) {
     RCLCPP_WARN(
       this->get_logger(),
-      "Smoke Alarm: %s",
-      smoke_status().c_str());
+      "Smoke Alarm: WARN");
   }
 }
 
@@ -168,45 +100,9 @@ std::string SensorMonitorNode::format_value(const SensorSnapshot & snapshot) con
     snapshot.unit == "state";
 
   std::ostringstream oss;
-  oss << std::fixed << std::setprecision(integer_like ? 0 : 1) << snapshot.value;
-  oss << " " << snapshot.unit;
+  oss << std::fixed << std::setprecision(integer_like ? 0 : 1)
+      << snapshot.value << " " << snapshot.unit;
   return oss.str();
-}
-
-std::string SensorMonitorNode::evaluate_high_threshold_status(
-  const SensorSnapshot & snapshot,
-  double warn_threshold,
-  double alarm_threshold) const
-{
-  if (!snapshot.available) {
-    return "N/A";
-  }
-
-  if (snapshot.value >= alarm_threshold) {
-    return "ALARM";
-  }
-  if (snapshot.value >= warn_threshold) {
-    return "WARN";
-  }
-  return "OK";
-}
-
-std::string SensorMonitorNode::evaluate_low_threshold_status(
-  const SensorSnapshot & snapshot,
-  double warn_threshold,
-  double alarm_threshold) const
-{
-  if (!snapshot.available) {
-    return "N/A";
-  }
-
-  if (snapshot.value <= alarm_threshold) {
-    return "ALARM";
-  }
-  if (snapshot.value <= warn_threshold) {
-    return "WARN";
-  }
-  return "OK";
 }
 
 std::string SensorMonitorNode::smoke_status() const
@@ -216,10 +112,10 @@ std::string SensorMonitorNode::smoke_status() const
   }
 
   if (smoke_.raw_value != 0 || smoke_.alarm) {
-    return "WARN | Fire detected";
+    return "WARN";
   }
 
-  return "OK | No fire";
+  return "OK";
 }
 
 void SensorMonitorNode::print_summary()
@@ -244,41 +140,29 @@ void SensorMonitorNode::print_summary()
   }
 
   if (ch4_.available) {
-    lines.emplace_back(
-      "CH4 Gas Concentration: " +
-      format_value(ch4_));
+    lines.emplace_back("CH4: " + format_value(ch4_));
   }
 
   if (co2_.available) {
-    lines.emplace_back(
-      "CO2 Gas Concentration: " +
-      format_value(co2_));
+    lines.emplace_back("CO2: " + format_value(co2_));
   }
 
   if (h2s_.available) {
-    lines.emplace_back(
-      "H2S Gas Concentration: " +
-      format_value(h2s_));
+    lines.emplace_back("H2S: " + format_value(h2s_));
   }
 
   if (co_.available) {
-    lines.emplace_back(
-      "CO Gas Concentration: " +
-      format_value(co_));
+    lines.emplace_back("CO: " + format_value(co_));
   }
 
   if (o2_.available) {
-    lines.emplace_back(
-      "O2 Gas Concentration: " +
-      format_value(o2_));
+    lines.emplace_back("O2: " + format_value(o2_));
   }
 
-  // Giữ nguyên Smoke Alarm
   if (smoke_.available) {
     lines.emplace_back("Smoke Alarm: " + smoke_status());
   }
 
-  // Không có dữ liệu thì không in gì cả
   if (lines.empty()) {
     return;
   }
@@ -295,7 +179,7 @@ void SensorMonitorNode::print_summary()
   RCLCPP_INFO(this->get_logger(), "%s", oss.str().c_str());
 }
 
-}  // namespace sensor_pkg
+}
 
 int main(int argc, char ** argv)
 {

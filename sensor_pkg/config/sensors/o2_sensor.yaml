@@ -18,7 +18,7 @@ o2_sensor_node:
     response_timeout_ms: 1000
     poll_interval_ms: 5000
     bus_lock_file: "/tmp/rs485_modbus_bus.lock"
-    sensor_name: "O2 concentration:"
+    sensor_name: "O2"
     sensor_model: "ES-O2-01"
     quantity: "oxygen"
     unit: "%VOL"
