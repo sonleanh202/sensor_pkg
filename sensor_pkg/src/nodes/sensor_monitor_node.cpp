@@ -147,6 +147,7 @@ void SensorMonitorNode::smoke_callback(const SensorMsg::SharedPtr msg)
 {
   update_snapshot(smoke_, msg);
 
+  // Giữ nguyên ưu tiên báo liên tục khi có cảnh báo/cháy
   if (smoke_.available && (smoke_.raw_value != 0 || smoke_.alarm)) {
     RCLCPP_WARN(
       this->get_logger(),
@@ -236,10 +237,7 @@ void SensorMonitorNode::print_summary()
       if (temperature_.available) {
         oss << " | ";
       }
-      oss << "Humidity: " << format_value(humidity_)
-          << " | "
-          << evaluate_high_threshold_status(
-               humidity_, humidity_warn_, humidity_alarm_);
+      oss << "Humidity: " << format_value(humidity_);
     }
 
     lines.emplace_back(oss.str());
@@ -247,43 +245,40 @@ void SensorMonitorNode::print_summary()
 
   if (ch4_.available) {
     lines.emplace_back(
-      "CH4 Concentration: " +
-      format_value(ch4_) + " | " +
-      evaluate_high_threshold_status(ch4_, ch4_warn_, ch4_alarm_));
+      "CH4 Gas Concentration: " +
+      format_value(ch4_));
   }
 
   if (co2_.available) {
     lines.emplace_back(
-      "CO2 Concentration: " +
-      format_value(co2_) + " | " +
-      evaluate_high_threshold_status(co2_, co2_warn_, co2_alarm_));
+      "CO2 Gas Concentration: " +
+      format_value(co2_));
   }
 
   if (h2s_.available) {
     lines.emplace_back(
-      "H2S Concentration: " +
-      format_value(h2s_) + " | " +
-      evaluate_high_threshold_status(h2s_, h2s_warn_, h2s_alarm_));
+      "H2S Gas Concentration: " +
+      format_value(h2s_));
   }
 
   if (co_.available) {
     lines.emplace_back(
-      "CO Concentration: " +
-      format_value(co_) + " | " +
-      evaluate_high_threshold_status(co_, co_warn_, co_alarm_));
+      "CO Gas Concentration: " +
+      format_value(co_));
   }
 
   if (o2_.available) {
     lines.emplace_back(
-      "O2 Concentration: " +
-      format_value(o2_) + " | " +
-      evaluate_low_threshold_status(o2_, o2_warn_low_, o2_alarm_low_));
+      "O2 Gas Concentration: " +
+      format_value(o2_));
   }
 
+  // Giữ nguyên Smoke Alarm
   if (smoke_.available) {
     lines.emplace_back("Smoke Alarm: " + smoke_status());
   }
 
+  // Không có dữ liệu thì không in gì cả
   if (lines.empty()) {
     return;
   }

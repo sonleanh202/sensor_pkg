@@ -2,8 +2,9 @@
 <package format="3">
   <name>sensor_pkg</name>
   <version>0.0.1</version>
-  <description>ROS 2 C++ RS485/Modbus RTU drivers for multiple industrial sensors.</description>
-  <maintainer email="professor5030@outlook.com">Aryann</maintainer>
+  <description>Init Commit</description>
+
+  <maintainer email="professor5030@outlook.com">LeSon</maintainer>
   <license>MIT</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
@@ -11,6 +12,7 @@
 
   <depend>rclcpp</depend>
   <depend>interfaces</depend>
+
   <exec_depend>launch</exec_depend>
   <exec_depend>launch_ros</exec_depend>
   <exec_depend>ament_index_python</exec_depend>
