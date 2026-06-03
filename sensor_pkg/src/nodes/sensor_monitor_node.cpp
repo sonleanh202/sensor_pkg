@@ -247,35 +247,35 @@ void SensorMonitorNode::print_summary()
 
   if (ch4_.available) {
     lines.emplace_back(
-      "CH4 Gas Concentration: " +
+      "CH4 Concentration: " +
       format_value(ch4_) + " | " +
       evaluate_high_threshold_status(ch4_, ch4_warn_, ch4_alarm_));
   }
 
   if (co2_.available) {
     lines.emplace_back(
-      "CO2 Gas Concentration: " +
+      "CO2 Concentration: " +
       format_value(co2_) + " | " +
       evaluate_high_threshold_status(co2_, co2_warn_, co2_alarm_));
   }
 
   if (h2s_.available) {
     lines.emplace_back(
-      "H2S Gas Concentration: " +
+      "H2S Concentration: " +
       format_value(h2s_) + " | " +
       evaluate_high_threshold_status(h2s_, h2s_warn_, h2s_alarm_));
   }
 
   if (co_.available) {
     lines.emplace_back(
-      "CO Gas Concentration: " +
+      "CO Concentration: " +
       format_value(co_) + " | " +
       evaluate_high_threshold_status(co_, co_warn_, co_alarm_));
   }
 
   if (o2_.available) {
     lines.emplace_back(
-      "O2 Gas Concentration: " +
+      "O2 Concentration: " +
       format_value(o2_) + " | " +
       evaluate_low_threshold_status(o2_, o2_warn_low_, o2_alarm_low_));
   }

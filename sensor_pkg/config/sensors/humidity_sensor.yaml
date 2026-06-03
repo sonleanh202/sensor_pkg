@@ -6,21 +6,27 @@ humidity_sensor_node:
     data_bits: 8
     stop_bits: 1
     slave_id: 7
-    read_register: 0
-    register_count: 1
-    scale: 0.1
-    offset: 0.0
-    signed_value: false
-    alarm_when_nonzero: false
-    warning_threshold: 80.0
-    alarm_threshold: 90.0
-    enabled: true
     response_timeout_ms: 1000
     poll_interval_ms: 5000
     bus_lock_file: "/tmp/rs485_modbus_bus.lock"
-    sensor_name: "Temperature:    Humidity: "
+    enabled: true
+
+    humidity_register: 0
+    temperature_register: 1
+    humidity_scale: 0.1
+    temperature_scale: 0.1
+    temperature_offset: 0.0
+    temperature_signed: true
+
+    humidity_warning_threshold: 80.0
+    humidity_alarm_threshold: 90.0
+
     sensor_model: "RT WS N01 QT"
-    quantity: "relative_humidity"
-    unit: "%RH"
-    topic_name: "/sensors/humidity"
-    notes: "Assumed RS-WS-N01-compatible humidity register 0x0000 with scale 0.1 %RH."
+    humidity_sensor_name: "Humidity"
+    temperature_sensor_name: "Temperature"
+    humidity_topic_name: "/sensors/humidity"
+    temperature_topic_name: "/sensors/temperature"
+    humidity_unit: "%RH"
+    temperature_unit: "C"
+    humidity_notes: "Humidity at register 0"
+    temperature_notes: "Temperature at register 1"
