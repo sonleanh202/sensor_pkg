@@ -14,7 +14,7 @@ SensorDefaults make_ch4_defaults()
   defaults.sensor_name = "ch4";
   defaults.sensor_model = "ES-CH4-01";
   defaults.quantity = "methane";
-  defaults.unit = "%LEL";
+  defaults.unit = "%";
   defaults.topic_name = "/sensors/ch4";
   defaults.read_register = 2;
   defaults.register_count = 1;

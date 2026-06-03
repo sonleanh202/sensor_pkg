@@ -44,7 +44,7 @@ HumiditySensorNode::HumiditySensorNode()
   this->declare_parameter<std::string>("humidity_topic_name", "/sensors/humidity");
   this->declare_parameter<std::string>("temperature_topic_name", "/sensors/temperature");
   this->declare_parameter<std::string>("humidity_unit", "%RH");
-  this->declare_parameter<std::string>("temperature_unit", "C");
+  this->declare_parameter<std::string>("temperature_unit", "\u00B0C");
   this->declare_parameter<std::string>("humidity_notes", "Humidity at register 0");
   this->declare_parameter<std::string>("temperature_notes", "Temperature at register 1");
 

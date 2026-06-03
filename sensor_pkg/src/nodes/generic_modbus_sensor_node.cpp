@@ -19,7 +19,7 @@ GenericModbusSensorNode::GenericModbusSensorNode(
 : Node(node_name)
 {
   this->declare_parameter<std::string>("port", "/dev/ttyUSB0");
-  this->declare_parameter<int>("baudrate", 4800);
+  this->declare_parameter<int>("baudrate", 9600);
   this->declare_parameter<std::string>("parity", "N");
   this->declare_parameter<int>("data_bits", 8);
   this->declare_parameter<int>("stop_bits", 1);

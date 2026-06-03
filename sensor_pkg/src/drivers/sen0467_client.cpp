@@ -10,6 +10,7 @@
 #include <chrono>
 #include <sstream>
 #include <stdexcept>
+#include <thread>
 
 namespace sensor_pkg
 {
@@ -78,11 +79,11 @@ void Sen0467UartToRs485Client::configure_port()
   ::cfsetospeed(&tty, speed);
 
   tty.c_cflag |= (CLOCAL | CREAD);
-  tty.c_cflag &= ~PARENB;   // no parity
-  tty.c_cflag &= ~CSTOPB;   // 1 stop bit
+  tty.c_cflag &= ~PARENB;
+  tty.c_cflag &= ~CSTOPB;
   tty.c_cflag &= ~CSIZE;
-  tty.c_cflag |= CS8;       // 8 data bits
-  tty.c_cflag &= ~CRTSCTS;  // no hw flow control
+  tty.c_cflag |= CS8;
+  tty.c_cflag &= ~CRTSCTS;
 
   tty.c_cc[VMIN] = 0;
   tty.c_cc[VTIME] = 0;
@@ -128,19 +129,15 @@ void Sen0467UartToRs485Client::write_frame(const std::array<uint8_t, 9> & frame)
 std::array<uint8_t, 9> Sen0467UartToRs485Client::read_frame()
 {
   std::array<uint8_t, 9> frame{};
-  size_t received = 0;
+  size_t idx = 0;
 
   const auto deadline =
     std::chrono::steady_clock::now() + std::chrono::milliseconds(timeout_ms_);
 
-  while (received < frame.size()) {
+  while (std::chrono::steady_clock::now() < deadline) {
     const auto now = std::chrono::steady_clock::now();
-    if (now >= deadline) {
-      throw std::runtime_error("timeout waiting sensor response");
-    }
-
-    const auto remaining_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-      deadline - now).count();
+    const auto remaining_ms =
+      std::chrono::duration_cast<std::chrono::milliseconds>(deadline - now).count();
 
     struct timeval tv;
     tv.tv_sec = static_cast<time_t>(remaining_ms / 1000);
@@ -161,10 +158,11 @@ std::array<uint8_t, 9> Sen0467UartToRs485Client::read_frame()
     }
 
     if (sel == 0) {
-      throw std::runtime_error("timeout waiting sensor response");
+      break;
     }
 
-    const ssize_t n = ::read(fd_, frame.data() + received, frame.size() - received);
+    uint8_t byte = 0;
+    const ssize_t n = ::read(fd_, &byte, 1);
     if (n < 0) {
       if (errno == EINTR || errno == EAGAIN) {
         continue;
@@ -178,10 +176,34 @@ std::array<uint8_t, 9> Sen0467UartToRs485Client::read_frame()
       continue;
     }
 
-    received += static_cast<size_t>(n);
+    // Đồng bộ lại theo header 0xFF
+    if (idx == 0) {
+      if (byte != 0xFF) {
+        continue;
+      }
+      frame[idx++] = byte;
+      continue;
+    }
+
+    frame[idx++] = byte;
+
+    if (idx == frame.size()) {
+      try {
+        validate_checksum(frame);
+      } catch (...) {
+        idx = 0;
+        continue;
+      }
+
+      if (frame[0] == 0xFF && (frame[1] == 0x86 || frame[1] == 0x78)) {
+        return frame;
+      }
+
+      idx = 0;
+    }
   }
 
-  return frame;
+  throw std::runtime_error("timeout waiting sensor response");
 }
 
 speed_t Sen0467UartToRs485Client::baud_to_speed(int baudrate)
@@ -247,14 +269,13 @@ void Sen0467UartToRs485Client::set_passive_mode(uint8_t address)
     connect();
   }
 
-  // FF 01 78 04 00 00 00 00 83
   const auto request = build_frame(address, 0x78, 0x04, 0x00, 0x00, 0x00, 0x00);
 
   flush_io();
   write_frame(request);
+  std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
   const auto response = read_frame();
-  validate_checksum(response);
 
   if (response[0] != 0xFF || response[1] != 0x78 || response[2] != 0x01) {
     throw std::runtime_error("set passive mode failed");
@@ -269,24 +290,20 @@ int Sen0467UartToRs485Client::read_h2s_ppm(uint8_t address)
     connect();
   }
 
-  // FF 01 86 00 00 00 00 00 79
   const auto request = build_frame(address, 0x86, 0x00, 0x00, 0x00, 0x00, 0x00);
 
   flush_io();
   write_frame(request);
+  std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
   const auto response = read_frame();
-  validate_checksum(response);
 
   if (response[0] != 0xFF || response[1] != 0x86) {
     throw std::runtime_error("invalid response header");
   }
 
-  const int ppm =
-    static_cast<int>(response[2]) * 256 +
-    static_cast<int>(response[3]);
-
-  return ppm;
+  return static_cast<int>(response[2]) * 256 +
+         static_cast<int>(response[3]);
 }
 
 }  // namespace sensor_pkg

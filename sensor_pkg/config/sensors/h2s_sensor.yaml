@@ -3,7 +3,7 @@ h2s_sensor_node:
     port: "/dev/ttyUSB0"
     baudrate: 9600
     address: 1
-    response_timeout_ms: 1000
+    response_timeout_ms: 1500
     poll_interval_ms: 5000
     bus_lock_file: "/tmp/rs485_modbus_bus.lock"
 
