@@ -9,7 +9,7 @@ humidity_sensor_node:
     response_timeout_ms: 1000
     poll_interval_ms: 5000
     bus_lock_file: "/tmp/rs485_modbus_bus.lock"
-    enabled: true
+    enabled: false
 
     humidity_register: 0
     temperature_register: 1

@@ -14,7 +14,7 @@ co_sensor_node:
     alarm_when_nonzero: false
     warning_threshold: 35.0
     alarm_threshold: 100.0
-    enabled: true
+    enabled: false
     response_timeout_ms: 1000
     poll_interval_ms: 5000
     bus_lock_file: "/tmp/rs485_modbus_bus.lock"
