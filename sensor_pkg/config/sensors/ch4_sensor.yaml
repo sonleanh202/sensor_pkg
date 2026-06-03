@@ -18,7 +18,7 @@ ch4_sensor_node:
     response_timeout_ms: 1000
     poll_interval_ms: 5000
     bus_lock_file: "/tmp/rs485_modbus_bus.lock"
-    sensor_name: "CH4"
+    sensor_name: "CH4 concentration:"
     sensor_model: "ES-CH4-01"
     quantity: "methane"
     unit: "%LEL"

@@ -4,7 +4,7 @@
 #include <string>
 
 #include "rclcpp/rclcpp.hpp"
-#include "sensor_pkg/drivers/sen0467_uart_rs485_client.hpp"
+#include "sensor_pkg/drivers/sen0467_client.hpp"
 #include "interfaces/msg/sensor.hpp"
 
 namespace sensor_pkg
@@ -39,7 +39,7 @@ private:
 
   rclcpp::Publisher<interfaces::msg::Sensor>::SharedPtr publisher_;
   rclcpp::TimerBase::SharedPtr timer_;
-  std::unique_ptr<Sen0467UartRs485Client> client_;
+  std::unique_ptr<Sen0467UartToRs485Client> client_;
 };
 
 }  // namespace sensor_pkg

@@ -18,7 +18,7 @@ co_sensor_node:
     response_timeout_ms: 1000
     poll_interval_ms: 5000
     bus_lock_file: "/tmp/rs485_modbus_bus.lock"
-    sensor_name: "CO"
+    sensor_name: "CO concentration:"
     sensor_model: "ES-CO-01"
     quantity: "carbon_monoxide"
     unit: "ppm"

@@ -15,18 +15,6 @@
 namespace sensor_pkg
 {
 
-namespace
-{
-std::string format_log_value(double value, const std::string & unit)
-{
-  const int precision = (unit == "ppm" || unit == "%LEL" || unit == "state") ? 0 : 1;
-
-  std::ostringstream oss;
-  oss << std::fixed << std::setprecision(precision) << value;
-  return oss.str();
-}
-}  // namespace
-
 GenericModbusSensorNode::GenericModbusSensorNode(
   const std::string & node_name,
   const SensorDefaults & defaults)
@@ -88,7 +76,6 @@ GenericModbusSensorNode::GenericModbusSensorNode(
   timer_ = this->create_wall_timer(
     std::chrono::milliseconds(poll_interval_ms_),
     std::bind(&GenericModbusSensorNode::timer_callback, this));
-
 }
 
 int32_t GenericModbusSensorNode::decode_raw_value(uint16_t raw_register) const
@@ -196,14 +183,6 @@ void GenericModbusSensorNode::timer_callback()
     msg.notes = notes_;
 
     publisher_->publish(msg);
-
-    RCLCPP_INFO(
-      this->get_logger(),
-      "%s | %s %s | %s",
-      sensor_name_.c_str(),
-      format_log_value(value, unit_).c_str(),
-      unit_.c_str(),
-      status.c_str());
   } catch (const std::exception & ex) {
     RCLCPP_ERROR(
       this->get_logger(),

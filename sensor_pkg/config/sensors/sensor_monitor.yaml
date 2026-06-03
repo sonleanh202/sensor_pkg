@@ -1,0 +1,25 @@
+sensor_monitor_node:
+  ros__parameters:
+    summary_interval_ms: 5000
+
+    ch4_topic: "/sensors/ch4"
+    co2_topic: "/sensors/co2"
+    temperature_topic: "/sensors/temperature"
+    humidity_topic: "/sensors/humidity"
+    h2s_topic: "/sensors/h2s"
+    co_topic: "/sensors/co"
+    o2_topic: "/sensors/o2"
+    smoke_topic: "/sensors/smoke_fire_alarm"
+
+    ch4_warn: 10.0
+    ch4_alarm: 20.0
+    co2_warn: 1000.0
+    co2_alarm: 2000.0
+    h2s_warn: 5.0
+    h2s_alarm: 10.0
+    co_warn: 35.0
+    co_alarm: 100.0
+    o2_warn_low: 20.0
+    o2_alarm_low: 19.5
+    humidity_warn: 80.0
+    humidity_alarm: 90.0

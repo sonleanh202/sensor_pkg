@@ -1,8 +1,8 @@
+#include <chrono>
+#include <functional>
 #include <memory>
 #include <stdexcept>
 #include <string>
-#include <chrono>
-#include <functional>
 
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_pkg/common/bus_lock.hpp"
@@ -54,7 +54,7 @@ H2S_SensorNode::H2S_SensorNode()
   alarm_threshold_ = this->get_parameter("alarm_threshold").as_double();
   enabled_ = this->get_parameter("enabled").as_bool();
 
-  client_ = std::make_unique<Sen0467UartRs485Client>(
+  client_ = std::make_unique<Sen0467UartToRs485Client>(
     port_, baudrate_, response_timeout_ms_);
 
   publisher_ =
@@ -121,14 +121,6 @@ void H2S_SensorNode::timer_callback()
     msg.notes = notes_;
 
     publisher_->publish(msg);
-
-    RCLCPP_INFO(
-      this->get_logger(),
-      "%s | %d %s | %s",
-      sensor_name_.c_str(),
-      ppm,
-      unit_.c_str(),
-      status.c_str());
   } catch (const std::exception & ex) {
     passive_mode_configured_ = false;
     if (client_ && client_->is_connected()) {

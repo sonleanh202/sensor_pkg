@@ -63,10 +63,19 @@ add_sensor_executable(humidity_sensor_node)
 
 add_executable(h2s_sensor_node
   src/nodes/h2s_sensor_node.cpp
-  src/drivers/sen0467_uart_rs485_client.cpp
+  src/drivers/sen0467_client.cpp
+)
+
+add_executable(sensor_monitor_node
+  src/nodes/sensor_monitor_node.cpp
 )
 
 target_include_directories(h2s_sensor_node PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+)
+
+target_include_directories(sensor_monitor_node PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
 )
@@ -76,7 +85,17 @@ ament_target_dependencies(h2s_sensor_node
   interfaces
 )
 
+ament_target_dependencies(sensor_monitor_node
+  rclcpp
+  interfaces
+)
+
 install(TARGETS h2s_sensor_node
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+install(TARGETS
+  sensor_monitor_node
   DESTINATION lib/${PROJECT_NAME}
 )
 

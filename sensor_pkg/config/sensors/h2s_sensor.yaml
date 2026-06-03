@@ -7,7 +7,7 @@ h2s_sensor_node:
     poll_interval_ms: 5000
     bus_lock_file: "/tmp/rs485_modbus_bus.lock"
 
-    sensor_name: "H2S"
+    sensor_name: "H2S concentration:"
     sensor_model: "SEN0467"
     quantity: "hydrogen_sulfide"
     unit: "ppm"

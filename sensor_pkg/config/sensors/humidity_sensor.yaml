@@ -18,7 +18,7 @@ humidity_sensor_node:
     response_timeout_ms: 1000
     poll_interval_ms: 5000
     bus_lock_file: "/tmp/rs485_modbus_bus.lock"
-    sensor_name: "Humidity"
+    sensor_name: "Temperature:    Humidity: "
     sensor_model: "RT WS N01 QT"
     quantity: "relative_humidity"
     unit: "%RH"

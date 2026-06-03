@@ -18,7 +18,7 @@ co2_sensor_node:
     response_timeout_ms: 1000
     poll_interval_ms: 5000
     bus_lock_file: "/tmp/rs485_modbus_bus.lock"
-    sensor_name: "CO2"
+    sensor_name: "CO2 concentration:"
     sensor_model: "ES-CO2-01"
     quantity: "carbon_dioxide"
     unit: "ppm"
