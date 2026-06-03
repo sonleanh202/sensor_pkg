@@ -4,8 +4,8 @@
 #include <string>
 
 #include "rclcpp/rclcpp.hpp"
-#include "sensor_pkg/drivers/sen0467_client.hpp"
 #include "interfaces/msg/sensor.hpp"
+#include "sensor_pkg/drivers/sen0467_client.hpp"
 
 namespace sensor_pkg
 {

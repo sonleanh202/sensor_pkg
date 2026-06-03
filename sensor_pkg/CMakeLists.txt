@@ -9,6 +9,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(interfaces REQUIRED)
 find_package(PkgConfig REQUIRED)
+
 pkg_check_modules(MODBUS REQUIRED libmodbus)
 
 add_library(sensor_core
@@ -66,16 +67,7 @@ add_executable(h2s_sensor_node
   src/drivers/sen0467_client.cpp
 )
 
-add_executable(sensor_monitor_node
-  src/nodes/sensor_monitor_node.cpp
-)
-
 target_include_directories(h2s_sensor_node PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>
-)
-
-target_include_directories(sensor_monitor_node PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
 )
@@ -85,13 +77,23 @@ ament_target_dependencies(h2s_sensor_node
   interfaces
 )
 
+install(TARGETS
+  h2s_sensor_node
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+add_executable(sensor_monitor_node
+  src/nodes/sensor_monitor_node.cpp
+)
+
+target_include_directories(sensor_monitor_node PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+)
+
 ament_target_dependencies(sensor_monitor_node
   rclcpp
   interfaces
-)
-
-install(TARGETS h2s_sensor_node
-  DESTINATION lib/${PROJECT_NAME}
 )
 
 install(TARGETS

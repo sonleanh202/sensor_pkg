@@ -3,8 +3,6 @@
 #include <chrono>
 #include <cstdint>
 #include <functional>
-#include <iomanip>
-#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -84,37 +82,6 @@ int32_t GenericModbusSensorNode::decode_raw_value(uint16_t raw_register) const
     return static_cast<int32_t>(raw_register);
   }
   return static_cast<int32_t>(static_cast<int16_t>(raw_register));
-}
-
-std::string GenericModbusSensorNode::format_thresholds() const
-{
-  if (alarm_when_nonzero_) {
-    return "state!=0/alarm";
-  }
-
-  std::ostringstream oss;
-  oss << std::fixed << std::setprecision(3);
-
-  bool has_any = false;
-
-  if (warning_threshold_ >= 0.0) {
-    oss << "warn>=" << warning_threshold_;
-    has_any = true;
-  }
-
-  if (alarm_threshold_ >= 0.0) {
-    if (has_any) {
-      oss << ", ";
-    }
-    oss << "alarm>=" << alarm_threshold_;
-    has_any = true;
-  }
-
-  if (!has_any) {
-    return "disabled";
-  }
-
-  return oss.str();
 }
 
 std::string GenericModbusSensorNode::evaluate_status(double value, int32_t raw_value) const

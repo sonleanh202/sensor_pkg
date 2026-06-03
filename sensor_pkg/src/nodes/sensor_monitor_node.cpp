@@ -147,7 +147,6 @@ void SensorMonitorNode::smoke_callback(const SensorMsg::SharedPtr msg)
 {
   update_snapshot(smoke_, msg);
 
-  // Giữ ưu tiên báo liên tục khi có cảnh báo/cháy
   if (smoke_.available && (smoke_.raw_value != 0 || smoke_.alarm)) {
     RCLCPP_WARN(
       this->get_logger(),
@@ -285,7 +284,6 @@ void SensorMonitorNode::print_summary()
     lines.emplace_back("Smoke Alarm: " + smoke_status());
   }
 
-  // Chỉ in khi thực sự đã có dữ liệu từ ít nhất một sensor
   if (lines.empty()) {
     return;
   }
