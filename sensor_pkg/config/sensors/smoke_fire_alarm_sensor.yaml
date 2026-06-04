@@ -5,7 +5,7 @@ smoke_fire_alarm_node:
     parity: "N"
     data_bits: 8
     stop_bits: 1
-    slave_id: 5
+    slave_id: 6
     read_register: 3
     register_count: 1
     scale: 1.0

@@ -5,7 +5,7 @@ co2_sensor_node:
     parity: "N"
     data_bits: 8
     stop_bits: 1
-    slave_id: 2
+    slave_id: 3
     read_register: 2
     register_count: 1
     scale: 1.0

@@ -19,7 +19,9 @@ public:
     int slave_id,
     int start_address,
     int register_count,
-    int response_timeout_ms);
+    int response_timeout_ms,
+    int max_retries = 3,
+    int retry_delay_ms = 100);
 };
 
 }  // namespace sensor_pkg

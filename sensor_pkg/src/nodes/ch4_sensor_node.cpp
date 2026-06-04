@@ -11,13 +11,15 @@ namespace
 SensorDefaults make_ch4_defaults()
 {
   SensorDefaults defaults;
-  defaults.sensor_name = "ch4";
+  defaults.sensor_name = "CH4";
   defaults.sensor_model = "ES-CH4-01";
   defaults.quantity = "methane";
   defaults.unit = "%LEL";
   defaults.topic_name = "/sensors/ch4";
+
   defaults.read_register = 2;
-  defaults.register_count = 1;
+  defaults.register_count = 2;
+
   defaults.scale = 1.0;
   defaults.offset = 0.0;
   defaults.signed_value = false;
@@ -25,7 +27,7 @@ SensorDefaults make_ch4_defaults()
   defaults.warning_threshold = 10.0;
   defaults.alarm_threshold = 20.0;
   defaults.enabled = true;
-  defaults.notes = "Read CH4 from Modbus holding register 0x0002.";
+  defaults.notes = "Read CH4 from two Modbus registers starting at 0x0002.";
   return defaults;
 }
 }  // namespace

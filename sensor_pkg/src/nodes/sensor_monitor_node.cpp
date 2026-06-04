@@ -12,7 +12,8 @@ namespace sensor_pkg
 SensorMonitorNode::SensorMonitorNode()
 : Node("sensor_monitor_node")
 {
-  this->declare_parameter<int>("summary_interval_ms", 5000);
+  summary_interval_ms_ = this->declare_parameter<int>("summary_interval_ms", 5000);
+  stale_timeout_ms_ = this->declare_parameter<int>("stale_timeout_ms", summary_interval_ms_);
 
   const auto ch4_topic = this->declare_parameter<std::string>("ch4_topic", "/sensors/ch4");
   const auto co2_topic = this->declare_parameter<std::string>("co2_topic", "/sensors/co2");
@@ -25,8 +26,6 @@ SensorMonitorNode::SensorMonitorNode()
   const auto o2_topic = this->declare_parameter<std::string>("o2_topic", "/sensors/o2");
   const auto smoke_topic =
     this->declare_parameter<std::string>("smoke_topic", "/sensors/smoke_fire_alarm");
-
-  const int summary_interval_ms = this->get_parameter("summary_interval_ms").as_int();
 
   ch4_sub_ = this->create_subscription<SensorMsg>(
     ch4_topic, 10,
@@ -61,7 +60,7 @@ SensorMonitorNode::SensorMonitorNode()
     [this](const SensorMsg::SharedPtr msg) { smoke_callback(msg); });
 
   summary_timer_ = this->create_wall_timer(
-    std::chrono::milliseconds(summary_interval_ms),
+    std::chrono::milliseconds(summary_interval_ms_),
     [this]() { print_summary(); });
 }
 
@@ -74,26 +73,32 @@ void SensorMonitorNode::update_snapshot(
   snapshot.raw_value = msg->raw_value;
   snapshot.unit = msg->unit;
   snapshot.alarm = msg->alarm;
+  snapshot.last_update_ns = this->now().nanoseconds();
 }
 
 void SensorMonitorNode::smoke_callback(const SensorMsg::SharedPtr msg)
 {
   update_snapshot(smoke_, msg);
 
-  // Nếu rơi vào cảnh báo thì báo liên tục
-  if (smoke_.available && (smoke_.raw_value != 0 || smoke_.alarm)) {
+  if (smoke_.raw_value != 0 || smoke_.alarm) {
     RCLCPP_WARN(
       this->get_logger(),
       "Smoke Alarm: WARN");
   }
 }
 
-std::string SensorMonitorNode::format_value(const SensorSnapshot & snapshot) const
+bool SensorMonitorNode::is_fresh(const SensorSnapshot & snapshot) const
 {
-  if (!snapshot.available) {
-    return "N/A";
+  if (!snapshot.available || snapshot.last_update_ns == 0) {
+    return false;
   }
 
+  const int64_t age_ns = this->now().nanoseconds() - snapshot.last_update_ns;
+  return age_ns <= static_cast<int64_t>(stale_timeout_ms_) * 1000000LL;
+}
+
+std::string SensorMonitorNode::format_value(const SensorSnapshot & snapshot) const
+{
   const bool integer_like =
     snapshot.unit == "ppm" ||
     snapshot.unit == "%LEL" ||
@@ -107,7 +112,7 @@ std::string SensorMonitorNode::format_value(const SensorSnapshot & snapshot) con
 
 std::string SensorMonitorNode::smoke_status() const
 {
-  if (!smoke_.available) {
+  if (!is_fresh(smoke_)) {
     return "N/A";
   }
 
@@ -122,15 +127,18 @@ void SensorMonitorNode::print_summary()
 {
   std::vector<std::string> lines;
 
-  if (temperature_.available || humidity_.available) {
+  const bool temp_fresh = is_fresh(temperature_);
+  const bool hum_fresh = is_fresh(humidity_);
+
+  if (temp_fresh || hum_fresh) {
     std::ostringstream oss;
 
-    if (temperature_.available) {
+    if (temp_fresh) {
       oss << "Temperature: " << format_value(temperature_);
     }
 
-    if (humidity_.available) {
-      if (temperature_.available) {
+    if (hum_fresh) {
+      if (temp_fresh) {
         oss << " | ";
       }
       oss << "Humidity: " << format_value(humidity_);
@@ -139,27 +147,27 @@ void SensorMonitorNode::print_summary()
     lines.emplace_back(oss.str());
   }
 
-  if (ch4_.available) {
+  if (is_fresh(ch4_)) {
     lines.emplace_back("CH4: " + format_value(ch4_));
   }
 
-  if (co2_.available) {
+  if (is_fresh(co2_)) {
     lines.emplace_back("CO2: " + format_value(co2_));
   }
 
-  if (h2s_.available) {
+  if (is_fresh(h2s_)) {
     lines.emplace_back("H2S: " + format_value(h2s_));
   }
 
-  if (co_.available) {
+  if (is_fresh(co_)) {
     lines.emplace_back("CO: " + format_value(co_));
   }
 
-  if (o2_.available) {
+  if (is_fresh(o2_)) {
     lines.emplace_back("O2: " + format_value(o2_));
   }
 
-  if (smoke_.available) {
+  if (is_fresh(smoke_)) {
     lines.emplace_back("Smoke Alarm: " + smoke_status());
   }
 
@@ -179,7 +187,7 @@ void SensorMonitorNode::print_summary()
   RCLCPP_INFO(this->get_logger(), "%s", oss.str().c_str());
 }
 
-}
+}  // namespace sensor_pkg
 
 int main(int argc, char ** argv)
 {

@@ -11,13 +11,15 @@ namespace
 SensorDefaults make_co2_defaults()
 {
   SensorDefaults defaults;
-  defaults.sensor_name = "co2";
+  defaults.sensor_name = "CO2";
   defaults.sensor_model = "ES-CO2-01";
   defaults.quantity = "carbon_dioxide";
   defaults.unit = "ppm";
   defaults.topic_name = "/sensors/co2";
+
   defaults.read_register = 2;
-  defaults.register_count = 1;
+  defaults.register_count = 2;
+
   defaults.scale = 1.0;
   defaults.offset = 0.0;
   defaults.signed_value = false;
@@ -25,7 +27,7 @@ SensorDefaults make_co2_defaults()
   defaults.warning_threshold = 1000.0;
   defaults.alarm_threshold = 2000.0;
   defaults.enabled = true;
-  defaults.notes = "Read CO2 from Modbus holding register 0x0002.";
+  defaults.notes = "Read CO2 from two Modbus registers starting at 0x0002.";
   return defaults;
 }
 }  // namespace

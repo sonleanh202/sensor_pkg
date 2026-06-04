@@ -11,13 +11,16 @@ namespace
 SensorDefaults make_co_defaults()
 {
   SensorDefaults defaults;
-  defaults.sensor_name = "co";
+  defaults.sensor_name = "CO";
   defaults.sensor_model = "ES-CO-01";
   defaults.quantity = "carbon_monoxide";
   defaults.unit = "ppm";
   defaults.topic_name = "/sensors/co";
-  defaults.read_register = 2;
-  defaults.register_count = 1;
+
+  // CO reads two registers: 5 and 6
+  defaults.read_register = 5;
+  defaults.register_count = 2;
+
   defaults.scale = 1.0;
   defaults.offset = 0.0;
   defaults.signed_value = false;
@@ -25,7 +28,7 @@ SensorDefaults make_co_defaults()
   defaults.warning_threshold = 35.0;
   defaults.alarm_threshold = 100.0;
   defaults.enabled = true;
-  defaults.notes = "Read CO from Modbus holding register 0x0002.";
+  defaults.notes = "Read CO from two Modbus registers: 5 and 6.";
   return defaults;
 }
 }  // namespace

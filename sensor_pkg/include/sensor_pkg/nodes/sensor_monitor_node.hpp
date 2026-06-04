@@ -17,6 +17,7 @@ struct SensorSnapshot
   int32_t raw_value{0};
   std::string unit;
   bool alarm{false};
+  int64_t last_update_ns{0};
 };
 
 class SensorMonitorNode : public rclcpp::Node
@@ -28,30 +29,15 @@ private:
   using SensorMsg = interfaces::msg::Sensor;
 
   void update_snapshot(SensorSnapshot & snapshot, const SensorMsg::SharedPtr msg);
-
-  void ch4_callback(const SensorMsg::SharedPtr msg);
-  void co2_callback(const SensorMsg::SharedPtr msg);
-  void temperature_callback(const SensorMsg::SharedPtr msg);
-  void humidity_callback(const SensorMsg::SharedPtr msg);
-  void h2s_callback(const SensorMsg::SharedPtr msg);
-  void co_callback(const SensorMsg::SharedPtr msg);
-  void o2_callback(const SensorMsg::SharedPtr msg);
   void smoke_callback(const SensorMsg::SharedPtr msg);
-
   void print_summary();
+
+  bool is_fresh(const SensorSnapshot & snapshot) const;
   std::string format_value(const SensorSnapshot & snapshot) const;
   std::string smoke_status() const;
 
   int summary_interval_ms_;
-
-  std::string ch4_topic_;
-  std::string co2_topic_;
-  std::string temperature_topic_;
-  std::string humidity_topic_;
-  std::string h2s_topic_;
-  std::string co_topic_;
-  std::string o2_topic_;
-  std::string smoke_topic_;
+  int stale_timeout_ms_;
 
   SensorSnapshot ch4_;
   SensorSnapshot co2_;

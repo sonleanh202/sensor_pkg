@@ -5,22 +5,25 @@ ch4_sensor_node:
     parity: "N"
     data_bits: 8
     stop_bits: 1
-    slave_id: 3
+    slave_id: 2
+
     read_register: 2
-    register_count: 1
+    register_count: 2
     scale: 1.0
     offset: 0.0
     signed_value: false
     alarm_when_nonzero: false
-    warning_threshold: 10.0
-    alarm_threshold: 20.0
-    enabled: true
-    response_timeout_ms: 1000
-    poll_interval_ms: 5000
+
+    response_timeout_ms: 3000
+    poll_interval_ms: 6500
     bus_lock_file: "/tmp/rs485_modbus_bus.lock"
+
     sensor_name: "CH4"
     sensor_model: "ES-CH4-01"
     quantity: "methane"
     unit: "%LEL"
     topic_name: "/sensors/ch4"
-    notes: "CH4 value at register 0x0002."
+
+    warning_threshold: 10.0
+    alarm_threshold: 20.0
+    enabled: true

@@ -33,7 +33,7 @@ GenericModbusSensorNode::GenericModbusSensorNode(
   this->declare_parameter<double>("warning_threshold", defaults.warning_threshold);
   this->declare_parameter<double>("alarm_threshold", defaults.alarm_threshold);
   this->declare_parameter<bool>("enabled", defaults.enabled);
-  this->declare_parameter<int>("response_timeout_ms", 1000);
+  this->declare_parameter<int>("response_timeout_ms", 2000);
   this->declare_parameter<int>("poll_interval_ms", 5000);
   this->declare_parameter<std::string>("bus_lock_file", "/tmp/rs485_modbus_bus.lock");
   this->declare_parameter<std::string>("sensor_name", defaults.sensor_name);
@@ -70,18 +70,55 @@ GenericModbusSensorNode::GenericModbusSensorNode(
   const std::string parity_string = this->get_parameter("parity").as_string();
   parity_ = parity_string.empty() ? 'N' : parity_string.front();
 
+  if (register_count_ <= 0) {
+    throw std::runtime_error("register_count must be greater than 0");
+  }
+
   publisher_ = this->create_publisher<interfaces::msg::Sensor>(topic_name_, 10);
+
   timer_ = this->create_wall_timer(
     std::chrono::milliseconds(poll_interval_ms_),
     std::bind(&GenericModbusSensorNode::timer_callback, this));
 }
 
-int32_t GenericModbusSensorNode::decode_raw_value(uint16_t raw_register) const
+int32_t GenericModbusSensorNode::decode_raw_value(
+  const std::vector<uint16_t> & registers) const
 {
-  if (!signed_value_) {
-    return static_cast<int32_t>(raw_register);
+  if (registers.empty()) {
+    throw std::runtime_error("Received empty register vector.");
   }
-  return static_cast<int32_t>(static_cast<int16_t>(raw_register));
+
+  // Nếu chỉ đọc 1 thanh ghi thì giữ logic cũ.
+  if (registers.size() == 1) {
+    if (signed_value_) {
+      return static_cast<int32_t>(static_cast<int16_t>(registers[0]));
+    }
+
+    return static_cast<int32_t>(registers[0]);
+  }
+
+  // Đọc 2 thanh ghi rồi ghép thành 32-bit.
+  // Format: high_word trước, low_word sau.
+  //
+  // raw = reg0 * 65536 + reg1
+  //
+  // Ví dụ:
+  // reg0 = 0
+  // reg1 = 2473
+  // raw = 2473
+  const uint32_t raw_u32 =
+    (static_cast<uint32_t>(registers[0]) << 16) |
+    static_cast<uint32_t>(registers[1]);
+
+  if (signed_value_) {
+    return static_cast<int32_t>(raw_u32);
+  }
+
+  if (raw_u32 > static_cast<uint32_t>(INT32_MAX)) {
+    throw std::runtime_error("Decoded unsigned 32-bit value exceeds int32 range.");
+  }
+
+  return static_cast<int32_t>(raw_u32);
 }
 
 std::string GenericModbusSensorNode::evaluate_status(double value, int32_t raw_value) const
@@ -127,11 +164,7 @@ void GenericModbusSensorNode::timer_callback()
       register_count_,
       response_timeout_ms_);
 
-    if (registers.empty()) {
-      throw std::runtime_error("Received empty register vector.");
-    }
-
-    const int32_t raw_value = decode_raw_value(registers.front());
+    const int32_t raw_value = decode_raw_value(registers);
     const double value = static_cast<double>(raw_value) * scale_ + offset_;
     const std::string status = evaluate_status(value, raw_value);
     const bool alarm = (status == "ALARM");

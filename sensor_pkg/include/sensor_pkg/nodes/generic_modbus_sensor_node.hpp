@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <string>
+#include <vector>
 
 #include "rclcpp/rclcpp.hpp"
 #include "interfaces/msg/sensor.hpp"
@@ -18,7 +19,7 @@ public:
     const SensorDefaults & defaults);
 
 private:
-  int32_t decode_raw_value(uint16_t raw_register) const;
+  int32_t decode_raw_value(const std::vector<uint16_t> & registers) const;
   std::string evaluate_status(double value, int32_t raw_value) const;
   void timer_callback();
 

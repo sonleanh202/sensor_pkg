@@ -28,8 +28,8 @@ def generate_launch_description():
         make_sensor_node('ch4_sensor_node', 'ch4_sensor.yaml'),
         make_sensor_node('o2_sensor_node', 'o2_sensor.yaml'),
         make_sensor_node('smoke_fire_alarm_node', 'smoke_fire_alarm_sensor.yaml'),
-        make_sensor_node('h2s_sensor_node', 'h2s_sensor.yaml'),
-        make_sensor_node('humidity_sensor_node', 'humidity_sensor.yaml'),
+        #make_sensor_node('h2s_sensor_node', 'h2s_sensor.yaml'),
+        #make_sensor_node('humidity_sensor_node', 'humidity_sensor.yaml'),
         make_sensor_node('sensor_monitor_node', 'sensor_monitor.yaml'),
     ]
 
