@@ -73,7 +73,6 @@ void SensorMonitorNode::update_snapshot(
   snapshot.value = msg->value;
   snapshot.raw_value = msg->raw_value;
   snapshot.unit = msg->unit;
-  snapshot.alarm = msg->alarm;
 }
 
 void SensorMonitorNode::smoke_callback(const SensorMsg::SharedPtr msg)
@@ -81,7 +80,7 @@ void SensorMonitorNode::smoke_callback(const SensorMsg::SharedPtr msg)
   update_snapshot(smoke_, msg);
 
   // Nếu rơi vào cảnh báo thì báo liên tục
-  if (smoke_.available && (smoke_.raw_value != 0 || smoke_.alarm)) {
+  if (smoke_.available && smoke_.raw_value != 0) {
     RCLCPP_WARN(
       this->get_logger(),
       "Smoke Alarm: WARN");
@@ -111,7 +110,7 @@ std::string SensorMonitorNode::smoke_status() const
     return "N/A";
   }
 
-  if (smoke_.raw_value != 0 || smoke_.alarm) {
+  if (smoke_.raw_value != 0) {
     return "WARN";
   }
 

@@ -21,9 +21,6 @@ SensorDefaults make_smoke_defaults()
   defaults.scale = 1.0;
   defaults.offset = 0.0;
   defaults.signed_value = false;
-  defaults.alarm_when_nonzero = true;
-  defaults.warning_threshold = 1.0;
-  defaults.alarm_threshold = 1.0;
   defaults.enabled = true;
   defaults.notes = "Read smoke/fire alarm status from 0x0003; 0=normal, 1=alarm.";
   return defaults;

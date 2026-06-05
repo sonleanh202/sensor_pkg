@@ -26,14 +26,12 @@ GenericModbusSensorNode::GenericModbusSensorNode(
   this->declare_parameter<int>("slave_id", 1);
   this->declare_parameter<int>("read_register", defaults.read_register);
   this->declare_parameter<int>("register_count", defaults.register_count);
+  this->declare_parameter<std::string>("word_order", "high_low");
   this->declare_parameter<double>("scale", defaults.scale);
   this->declare_parameter<double>("offset", defaults.offset);
   this->declare_parameter<bool>("signed_value", defaults.signed_value);
-  this->declare_parameter<bool>("alarm_when_nonzero", defaults.alarm_when_nonzero);
-  this->declare_parameter<double>("warning_threshold", defaults.warning_threshold);
-  this->declare_parameter<double>("alarm_threshold", defaults.alarm_threshold);
   this->declare_parameter<bool>("enabled", defaults.enabled);
-  this->declare_parameter<int>("response_timeout_ms", 1000);
+  this->declare_parameter<int>("response_timeout_ms", 3000);
   this->declare_parameter<int>("poll_interval_ms", 5000);
   this->declare_parameter<std::string>("bus_lock_file", "/tmp/rs485_modbus_bus.lock");
   this->declare_parameter<std::string>("sensor_name", defaults.sensor_name);
@@ -50,12 +48,10 @@ GenericModbusSensorNode::GenericModbusSensorNode(
   slave_id_ = this->get_parameter("slave_id").as_int();
   read_register_ = this->get_parameter("read_register").as_int();
   register_count_ = this->get_parameter("register_count").as_int();
+  word_order_ = this->get_parameter("word_order").as_string();
   scale_ = this->get_parameter("scale").as_double();
   offset_ = this->get_parameter("offset").as_double();
   signed_value_ = this->get_parameter("signed_value").as_bool();
-  alarm_when_nonzero_ = this->get_parameter("alarm_when_nonzero").as_bool();
-  warning_threshold_ = this->get_parameter("warning_threshold").as_double();
-  alarm_threshold_ = this->get_parameter("alarm_threshold").as_double();
   enabled_ = this->get_parameter("enabled").as_bool();
   response_timeout_ms_ = this->get_parameter("response_timeout_ms").as_int();
   poll_interval_ms_ = this->get_parameter("poll_interval_ms").as_int();
@@ -70,35 +66,53 @@ GenericModbusSensorNode::GenericModbusSensorNode(
   const std::string parity_string = this->get_parameter("parity").as_string();
   parity_ = parity_string.empty() ? 'N' : parity_string.front();
 
+  if (register_count_ <= 0) {
+    throw std::runtime_error("register_count must be greater than 0");
+  }
+
   publisher_ = this->create_publisher<interfaces::msg::Sensor>(topic_name_, 10);
+
   timer_ = this->create_wall_timer(
     std::chrono::milliseconds(poll_interval_ms_),
     std::bind(&GenericModbusSensorNode::timer_callback, this));
 }
 
-int32_t GenericModbusSensorNode::decode_raw_value(uint16_t raw_register) const
+int32_t GenericModbusSensorNode::decode_raw_value(
+  const std::vector<uint16_t> & registers) const
 {
-  if (!signed_value_) {
-    return static_cast<int32_t>(raw_register);
-  }
-  return static_cast<int32_t>(static_cast<int16_t>(raw_register));
-}
-
-std::string GenericModbusSensorNode::evaluate_status(double value, int32_t raw_value) const
-{
-  if (alarm_when_nonzero_) {
-    return raw_value != 0 ? "ALARM" : "OK";
+  if (registers.empty()) {
+    throw std::runtime_error("Received empty register vector.");
   }
 
-  if (alarm_threshold_ >= 0.0 && value >= alarm_threshold_) {
-    return "ALARM";
+  if (registers.size() == 1) {
+    if (signed_value_) {
+      return static_cast<int32_t>(static_cast<int16_t>(registers[0]));
+    }
+
+    return static_cast<int32_t>(registers[0]);
   }
 
-  if (warning_threshold_ >= 0.0 && value >= warning_threshold_) {
-    return "WARN";
+  uint32_t raw_u32 = 0;
+
+  if (word_order_ == "low_high") {
+    raw_u32 =
+      (static_cast<uint32_t>(registers[1]) << 16) |
+      static_cast<uint32_t>(registers[0]);
+  } else {
+    raw_u32 =
+      (static_cast<uint32_t>(registers[0]) << 16) |
+      static_cast<uint32_t>(registers[1]);
   }
 
-  return "OK";
+  if (signed_value_) {
+    return static_cast<int32_t>(raw_u32);
+  }
+
+  if (raw_u32 > static_cast<uint32_t>(INT32_MAX)) {
+    throw std::runtime_error("Decoded unsigned 32-bit value exceeds int32 range.");
+  }
+
+  return static_cast<int32_t>(raw_u32);
 }
 
 void GenericModbusSensorNode::timer_callback()
@@ -127,14 +141,8 @@ void GenericModbusSensorNode::timer_callback()
       register_count_,
       response_timeout_ms_);
 
-    if (registers.empty()) {
-      throw std::runtime_error("Received empty register vector.");
-    }
-
-    const int32_t raw_value = decode_raw_value(registers.front());
+    const int32_t raw_value = decode_raw_value(registers);
     const double value = static_cast<double>(raw_value) * scale_ + offset_;
-    const std::string status = evaluate_status(value, raw_value);
-    const bool alarm = (status == "ALARM");
 
     interfaces::msg::Sensor msg;
     msg.stamp = this->get_clock()->now();
@@ -144,7 +152,6 @@ void GenericModbusSensorNode::timer_callback()
     msg.value = value;
     msg.unit = unit_;
     msg.raw_value = raw_value;
-    msg.alarm = alarm;
     msg.slave_id = static_cast<uint16_t>(slave_id_);
     msg.port = port_;
     msg.notes = notes_;

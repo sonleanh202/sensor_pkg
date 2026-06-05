@@ -21,9 +21,6 @@ SensorDefaults make_co2_defaults()
   defaults.scale = 1.0;
   defaults.offset = 0.0;
   defaults.signed_value = false;
-  defaults.alarm_when_nonzero = false;
-  defaults.warning_threshold = 1000.0;
-  defaults.alarm_threshold = 2000.0;
   defaults.enabled = true;
   defaults.notes = "Read CO2 from Modbus holding register 0x0002.";
   return defaults;

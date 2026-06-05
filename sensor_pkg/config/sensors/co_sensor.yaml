@@ -11,9 +11,6 @@ co_sensor_node:
     scale: 1.0
     offset: 0.0
     signed_value: false
-    alarm_when_nonzero: false
-    warning_threshold: 35.0
-    alarm_threshold: 100.0
     enabled: false
     response_timeout_ms: 1000
     poll_interval_ms: 5000

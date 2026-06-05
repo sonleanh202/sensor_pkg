@@ -17,7 +17,6 @@ public:
 
 private:
   void timer_callback();
-  std::string evaluate_status(int ppm) const;
 
   std::string port_;
   int baudrate_;
@@ -31,8 +30,6 @@ private:
   std::string unit_;
   std::string topic_name_;
   std::string notes_;
-  double warning_threshold_;
-  double alarm_threshold_;
   bool enabled_;
 
   bool passive_mode_configured_;

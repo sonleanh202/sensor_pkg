@@ -35,9 +35,6 @@ HumiditySensorNode::HumiditySensorNode()
   this->declare_parameter<double>("temperature_offset", 0.0);
   this->declare_parameter<bool>("temperature_signed", true);
 
-  this->declare_parameter<double>("humidity_warning_threshold", 80.0);
-  this->declare_parameter<double>("humidity_alarm_threshold", 90.0);
-
   this->declare_parameter<std::string>("sensor_model", "RT WS N01 QT");
   this->declare_parameter<std::string>("humidity_sensor_name", "Humidity");
   this->declare_parameter<std::string>("temperature_sensor_name", "Temperature");
@@ -65,11 +62,6 @@ HumiditySensorNode::HumiditySensorNode()
   temperature_offset_ = this->get_parameter("temperature_offset").as_double();
   temperature_signed_ = this->get_parameter("temperature_signed").as_bool();
 
-  humidity_warning_threshold_ =
-    this->get_parameter("humidity_warning_threshold").as_double();
-  humidity_alarm_threshold_ =
-    this->get_parameter("humidity_alarm_threshold").as_double();
-
   sensor_model_ = this->get_parameter("sensor_model").as_string();
   humidity_sensor_name_ = this->get_parameter("humidity_sensor_name").as_string();
   temperature_sensor_name_ = this->get_parameter("temperature_sensor_name").as_string();
@@ -96,17 +88,6 @@ HumiditySensorNode::HumiditySensorNode()
 int32_t HumiditySensorNode::decode_signed(uint16_t raw) const
 {
   return static_cast<int32_t>(static_cast<int16_t>(raw));
-}
-
-std::string HumiditySensorNode::evaluate_humidity_status(double humidity) const
-{
-  if (humidity_alarm_threshold_ >= 0.0 && humidity >= humidity_alarm_threshold_) {
-    return "ALARM";
-  }
-  if (humidity_warning_threshold_ >= 0.0 && humidity >= humidity_warning_threshold_) {
-    return "WARN";
-  }
-  return "OK";
 }
 
 void HumiditySensorNode::timer_callback()
@@ -160,9 +141,6 @@ void HumiditySensorNode::timer_callback()
     const double temperature_value =
       static_cast<double>(temperature_raw) * temperature_scale_ + temperature_offset_;
 
-    const std::string humidity_status = evaluate_humidity_status(humidity_value);
-    const bool humidity_alarm = (humidity_status == "ALARM");
-
     interfaces::msg::Sensor humidity_msg;
     humidity_msg.stamp = this->get_clock()->now();
     humidity_msg.sensor_name = humidity_sensor_name_;
@@ -171,26 +149,24 @@ void HumiditySensorNode::timer_callback()
     humidity_msg.value = humidity_value;
     humidity_msg.unit = humidity_unit_;
     humidity_msg.raw_value = humidity_raw;
-    humidity_msg.alarm = humidity_alarm;
     humidity_msg.slave_id = static_cast<uint16_t>(slave_id_);
     humidity_msg.port = port_;
-    humidity_msg.notes = humidity_notes_;
+
+    humidity_publisher_->publish(humidity_msg);
 
     interfaces::msg::Sensor temperature_msg;
-    temperature_msg.stamp = humidity_msg.stamp;
+    temperature_msg.stamp = this->get_clock()->now();
     temperature_msg.sensor_name = temperature_sensor_name_;
     temperature_msg.sensor_model = sensor_model_;
     temperature_msg.quantity = "temperature";
     temperature_msg.value = temperature_value;
     temperature_msg.unit = temperature_unit_;
     temperature_msg.raw_value = temperature_raw;
-    temperature_msg.alarm = false;
     temperature_msg.slave_id = static_cast<uint16_t>(slave_id_);
     temperature_msg.port = port_;
-    temperature_msg.notes = temperature_notes_;
 
-    humidity_publisher_->publish(humidity_msg);
     temperature_publisher_->publish(temperature_msg);
+
   } catch (const std::exception & ex) {
     RCLCPP_ERROR(
       this->get_logger(),

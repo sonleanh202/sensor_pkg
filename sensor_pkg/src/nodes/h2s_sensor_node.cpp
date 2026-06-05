@@ -17,8 +17,6 @@ H2S_SensorNode::H2S_SensorNode()
   address_(1),
   response_timeout_ms_(1000),
   poll_interval_ms_(5000),
-  warning_threshold_(5.0),
-  alarm_threshold_(10.0),
   enabled_(true),
   passive_mode_configured_(false)
 {
@@ -34,8 +32,6 @@ H2S_SensorNode::H2S_SensorNode()
   this->declare_parameter<std::string>("unit", "ppm");
   this->declare_parameter<std::string>("topic_name", "/sensors/h2s");
   this->declare_parameter<std::string>("notes", "UART-over-RS485 using SEN0467");
-  this->declare_parameter<double>("warning_threshold", 5.0);
-  this->declare_parameter<double>("alarm_threshold", 10.0);
   this->declare_parameter<bool>("enabled", true);
 
   port_ = this->get_parameter("port").as_string();
@@ -50,8 +46,6 @@ H2S_SensorNode::H2S_SensorNode()
   unit_ = this->get_parameter("unit").as_string();
   topic_name_ = this->get_parameter("topic_name").as_string();
   notes_ = this->get_parameter("notes").as_string();
-  warning_threshold_ = this->get_parameter("warning_threshold").as_double();
-  alarm_threshold_ = this->get_parameter("alarm_threshold").as_double();
   enabled_ = this->get_parameter("enabled").as_bool();
 
   client_ = std::make_unique<Sen0467UartToRs485Client>(
@@ -65,18 +59,6 @@ H2S_SensorNode::H2S_SensorNode()
     std::bind(&H2S_SensorNode::timer_callback, this));
 }
 
-std::string H2S_SensorNode::evaluate_status(int ppm) const
-{
-  if (alarm_threshold_ >= 0.0 && static_cast<double>(ppm) >= alarm_threshold_) {
-    return "ALARM";
-  }
-
-  if (warning_threshold_ >= 0.0 && static_cast<double>(ppm) >= warning_threshold_) {
-    return "WARN";
-  }
-
-  return "OK";
-}
 
 void H2S_SensorNode::timer_callback()
 {
@@ -104,8 +86,6 @@ void H2S_SensorNode::timer_callback()
     }
 
     const int ppm = client_->read_h2s_ppm(static_cast<uint8_t>(address_));
-    const std::string status = evaluate_status(ppm);
-    const bool alarm = (status == "ALARM");
 
     interfaces::msg::Sensor msg;
     msg.stamp = this->get_clock()->now();
@@ -115,7 +95,6 @@ void H2S_SensorNode::timer_callback()
     msg.value = static_cast<double>(ppm);
     msg.unit = unit_;
     msg.raw_value = ppm;
-    msg.alarm = alarm;
     msg.slave_id = static_cast<uint16_t>(address_);
     msg.port = port_;
     msg.notes = notes_;

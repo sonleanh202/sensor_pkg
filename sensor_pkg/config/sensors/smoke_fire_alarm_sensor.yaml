@@ -11,9 +11,6 @@ smoke_fire_alarm_node:
     scale: 1.0
     offset: 0.0
     signed_value: false
-    alarm_when_nonzero: true
-    warning_threshold: 1.0
-    alarm_threshold: 1.0
     enabled: true
     response_timeout_ms: 1000
     poll_interval_ms: 5000

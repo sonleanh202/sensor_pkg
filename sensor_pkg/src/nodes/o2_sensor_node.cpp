@@ -21,9 +21,6 @@ SensorDefaults make_o2_defaults()
   defaults.scale = 0.1;
   defaults.offset = 0.0;
   defaults.signed_value = false;
-  defaults.alarm_when_nonzero = false;
-  defaults.warning_threshold = -1.0;
-  defaults.alarm_threshold = 19.5;
   defaults.enabled = true;
   defaults.notes = "Read O2 from Modbus holding register 0x0002; raw unit is 0.1 %VOL.";
   return defaults;

@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <string>
+#include <vector>
 
 #include "rclcpp/rclcpp.hpp"
 #include "interfaces/msg/sensor.hpp"
@@ -18,8 +19,7 @@ public:
     const SensorDefaults & defaults);
 
 private:
-  int32_t decode_raw_value(uint16_t raw_register) const;
-  std::string evaluate_status(double value, int32_t raw_value) const;
+  int32_t decode_raw_value(const std::vector<uint16_t> & registers) const;
   void timer_callback();
 
   rclcpp::Publisher<interfaces::msg::Sensor>::SharedPtr publisher_;
@@ -33,12 +33,10 @@ private:
   int slave_id_;
   int read_register_;
   int register_count_;
+  std::string word_order_;
   double scale_;
   double offset_;
   bool signed_value_;
-  bool alarm_when_nonzero_;
-  double warning_threshold_;
-  double alarm_threshold_;
   bool enabled_;
   int response_timeout_ms_;
   int poll_interval_ms_;

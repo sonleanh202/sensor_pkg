@@ -21,9 +21,6 @@ SensorDefaults make_co_defaults()
   defaults.scale = 1.0;
   defaults.offset = 0.0;
   defaults.signed_value = false;
-  defaults.alarm_when_nonzero = false;
-  defaults.warning_threshold = 35.0;
-  defaults.alarm_threshold = 100.0;
   defaults.enabled = true;
   defaults.notes = "Read CO from Modbus holding register 0x0002.";
   return defaults;

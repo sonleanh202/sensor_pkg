@@ -16,7 +16,6 @@ struct SensorSnapshot
   double value{0.0};
   int32_t raw_value{0};
   std::string unit;
-  bool alarm{false};
 };
 
 class SensorMonitorNode : public rclcpp::Node

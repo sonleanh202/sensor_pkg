@@ -21,9 +21,6 @@ SensorDefaults make_ch4_defaults()
   defaults.scale = 1.0;
   defaults.offset = 0.0;
   defaults.signed_value = false;
-  defaults.alarm_when_nonzero = false;
-  defaults.warning_threshold = 10.0;
-  defaults.alarm_threshold = 20.0;
   defaults.enabled = true;
   defaults.notes = "Read CH4 from Modbus holding register 0x0002.";
   return defaults;
