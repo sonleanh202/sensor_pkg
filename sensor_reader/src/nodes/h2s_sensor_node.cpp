@@ -1,3 +1,5 @@
+#include "sensor_reader/nodes/h2s_sensor_node.hpp"
+
 #include <chrono>
 #include <functional>
 #include <memory>
@@ -6,14 +8,12 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_reader/common/bus_lock.hpp"
-#include "sensor_reader/nodes/h2s_sensor_node.hpp"
 
 namespace sensor_reader
 {
 
 H2S_SensorNode::H2S_SensorNode()
 : Node("h2s_sensor_node"),
-  baudrate_(9600),
   address_(1),
   response_timeout_ms_(1000),
   poll_interval_ms_(5000),
@@ -21,25 +21,25 @@ H2S_SensorNode::H2S_SensorNode()
   passive_mode_configured_(false)
 {
   this->declare_parameter<std::string>("port", "/dev/ttyUSB0");
-  this->declare_parameter<int>("baudrate", 9600);
   this->declare_parameter<int>("address", 1);
   this->declare_parameter<int>("response_timeout_ms", 1000);
   this->declare_parameter<int>("poll_interval_ms", 5000);
   this->declare_parameter<std::string>("bus_lock_file", "/tmp/rs485_modbus_bus.lock");
+
   this->declare_parameter<std::string>("sensor_name", "H2S");
   this->declare_parameter<std::string>("sensor_model", "SEN0467");
   this->declare_parameter<std::string>("quantity", "hydrogen_sulfide");
   this->declare_parameter<std::string>("unit", "ppm");
-  this->declare_parameter<std::string>("topic_name", "/sensors/h2s");
-  this->declare_parameter<std::string>("notes", "UART-over-RS485 using SEN0467");
+  this->declare_parameter<std::string>("topic_name", "/sensor/H2S");
+  this->declare_parameter<std::string>("notes", "SEN0467 UART-over-RS485, fixed 9600 baud");
   this->declare_parameter<bool>("enabled", true);
 
   port_ = this->get_parameter("port").as_string();
-  baudrate_ = this->get_parameter("baudrate").as_int();
   address_ = this->get_parameter("address").as_int();
   response_timeout_ms_ = this->get_parameter("response_timeout_ms").as_int();
   poll_interval_ms_ = this->get_parameter("poll_interval_ms").as_int();
   bus_lock_file_ = this->get_parameter("bus_lock_file").as_string();
+
   sensor_name_ = this->get_parameter("sensor_name").as_string();
   sensor_model_ = this->get_parameter("sensor_model").as_string();
   quantity_ = this->get_parameter("quantity").as_string();
@@ -49,16 +49,15 @@ H2S_SensorNode::H2S_SensorNode()
   enabled_ = this->get_parameter("enabled").as_bool();
 
   client_ = std::make_unique<Sen0467UartToRs485Client>(
-    port_, baudrate_, response_timeout_ms_);
+    port_,
+    response_timeout_ms_);
 
-  publisher_ =
-    this->create_publisher<interfaces::msg::Sensor>(topic_name_, 10);
+  publisher_ = this->create_publisher<interfaces::msg::Sensor>(topic_name_, 10);
 
   timer_ = this->create_wall_timer(
     std::chrono::milliseconds(poll_interval_ms_),
     std::bind(&H2S_SensorNode::timer_callback, this));
 }
-
 
 void H2S_SensorNode::timer_callback()
 {
@@ -102,6 +101,7 @@ void H2S_SensorNode::timer_callback()
     publisher_->publish(msg);
   } catch (const std::exception & ex) {
     passive_mode_configured_ = false;
+
     if (client_ && client_->is_connected()) {
       client_->disconnect();
     }

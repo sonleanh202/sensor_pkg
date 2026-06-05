@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <sys/select.h>
+#include <termios.h>
 #include <unistd.h>
 
 #include <chrono>
@@ -17,9 +18,10 @@ namespace sensor_reader
 
 Sen0467UartToRs485Client::Sen0467UartToRs485Client(
   const std::string & port,
-  int baudrate,
   int timeout_ms)
-: fd_(-1), port_(port), baudrate_(baudrate), timeout_ms_(timeout_ms)
+: fd_(-1),
+  port_(port),
+  timeout_ms_(timeout_ms)
 {
 }
 
@@ -33,6 +35,7 @@ void Sen0467UartToRs485Client::connect()
   if (is_connected()) {
     return;
   }
+
   open_port();
   configure_port();
   flush_io();
@@ -54,6 +57,7 @@ bool Sen0467UartToRs485Client::is_connected() const
 void Sen0467UartToRs485Client::open_port()
 {
   fd_ = ::open(port_.c_str(), O_RDWR | O_NOCTTY | O_SYNC);
+
   if (fd_ < 0) {
     std::ostringstream oss;
     oss << "open(" << port_ << ") failed: " << ::strerror(errno);
@@ -74,16 +78,16 @@ void Sen0467UartToRs485Client::configure_port()
 
   ::cfmakeraw(&tty);
 
-  const speed_t speed = baud_to_speed(baudrate_);
-  ::cfsetispeed(&tty, speed);
-  ::cfsetospeed(&tty, speed);
+  // SEN0467 dùng cố định UART 9600-8N1
+  ::cfsetispeed(&tty, B9600);
+  ::cfsetospeed(&tty, B9600);
 
   tty.c_cflag |= (CLOCAL | CREAD);
-  tty.c_cflag &= ~PARENB;
-  tty.c_cflag &= ~CSTOPB;
+  tty.c_cflag &= ~PARENB;   // no parity
+  tty.c_cflag &= ~CSTOPB;   // 1 stop bit
   tty.c_cflag &= ~CSIZE;
-  tty.c_cflag |= CS8;
-  tty.c_cflag &= ~CRTSCTS;
+  tty.c_cflag |= CS8;       // 8 data bits
+  tty.c_cflag &= ~CRTSCTS;  // no hardware flow control
 
   tty.c_cc[VMIN] = 0;
   tty.c_cc[VTIME] = 0;
@@ -105,6 +109,7 @@ void Sen0467UartToRs485Client::flush_io()
 void Sen0467UartToRs485Client::write_frame(const std::array<uint8_t, 9> & frame)
 {
   size_t written_total = 0;
+
   while (written_total < frame.size()) {
     const ssize_t ret = ::write(
       fd_,
@@ -115,6 +120,7 @@ void Sen0467UartToRs485Client::write_frame(const std::array<uint8_t, 9> & frame)
       if (errno == EINTR) {
         continue;
       }
+
       std::ostringstream oss;
       oss << "write failed: " << ::strerror(errno);
       throw std::runtime_error(oss.str());
@@ -148,10 +154,12 @@ std::array<uint8_t, 9> Sen0467UartToRs485Client::read_frame()
     FD_SET(fd_, &readfds);
 
     const int sel = ::select(fd_ + 1, &readfds, nullptr, nullptr, &tv);
+
     if (sel < 0) {
       if (errno == EINTR) {
         continue;
       }
+
       std::ostringstream oss;
       oss << "select failed: " << ::strerror(errno);
       throw std::runtime_error(oss.str());
@@ -163,10 +171,12 @@ std::array<uint8_t, 9> Sen0467UartToRs485Client::read_frame()
 
     uint8_t byte = 0;
     const ssize_t n = ::read(fd_, &byte, 1);
+
     if (n < 0) {
       if (errno == EINTR || errno == EAGAIN) {
         continue;
       }
+
       std::ostringstream oss;
       oss << "read failed: " << ::strerror(errno);
       throw std::runtime_error(oss.str());
@@ -181,6 +191,7 @@ std::array<uint8_t, 9> Sen0467UartToRs485Client::read_frame()
       if (byte != 0xFF) {
         continue;
       }
+
       frame[idx++] = byte;
       continue;
     }
@@ -206,30 +217,15 @@ std::array<uint8_t, 9> Sen0467UartToRs485Client::read_frame()
   throw std::runtime_error("timeout waiting sensor response");
 }
 
-speed_t Sen0467UartToRs485Client::baud_to_speed(int baudrate)
-{
-  switch (baudrate) {
-    case 9600:
-      return B9600;
-    case 19200:
-      return B19200;
-    case 38400:
-      return B38400;
-    case 57600:
-      return B57600;
-    case 115200:
-      return B115200;
-    default:
-      throw std::runtime_error("unsupported baudrate");
-  }
-}
-
-uint8_t Sen0467UartToRs485Client::calc_checksum(const std::array<uint8_t, 9> & frame)
+uint8_t Sen0467UartToRs485Client::calc_checksum(
+  const std::array<uint8_t, 9> & frame)
 {
   uint8_t sum = 0;
+
   for (size_t i = 1; i <= 7; ++i) {
     sum = static_cast<uint8_t>(sum + frame[i]);
   }
+
   return static_cast<uint8_t>(~sum + 1);
 }
 
@@ -255,9 +251,11 @@ std::array<uint8_t, 9> Sen0467UartToRs485Client::build_frame(
   return frame;
 }
 
-void Sen0467UartToRs485Client::validate_checksum(const std::array<uint8_t, 9> & frame)
+void Sen0467UartToRs485Client::validate_checksum(
+  const std::array<uint8_t, 9> & frame)
 {
   const uint8_t expected = calc_checksum(frame);
+
   if (frame[8] != expected) {
     throw std::runtime_error("checksum mismatch");
   }
@@ -269,7 +267,14 @@ void Sen0467UartToRs485Client::set_passive_mode(uint8_t address)
     connect();
   }
 
-  const auto request = build_frame(address, 0x78, 0x04, 0x00, 0x00, 0x00, 0x00);
+  const auto request = build_frame(
+    address,
+    0x78,
+    0x04,
+    0x00,
+    0x00,
+    0x00,
+    0x00);
 
   flush_io();
   write_frame(request);
@@ -290,7 +295,14 @@ int Sen0467UartToRs485Client::read_h2s_ppm(uint8_t address)
     connect();
   }
 
-  const auto request = build_frame(address, 0x86, 0x00, 0x00, 0x00, 0x00, 0x00);
+  const auto request = build_frame(
+    address,
+    0x86,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x00);
 
   flush_io();
   write_frame(request);
@@ -306,4 +318,4 @@ int Sen0467UartToRs485Client::read_h2s_ppm(uint8_t address)
          static_cast<int>(response[3]);
 }
 
-} 
+}  // namespace sensor_reader

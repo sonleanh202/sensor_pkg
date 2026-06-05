@@ -11,7 +11,7 @@ co_sensor_node:
     scale: 1.0
     offset: 0.0
     signed_value: false
-    enabled: false
+    enabled: true
     response_timeout_ms: 3000
     poll_interval_ms: 5000
     bus_lock_file: "/tmp/rs485_modbus_bus.lock"
