@@ -1,0 +1,23 @@
+h2s_sensor_node:
+  ros__parameters:
+    port: "/dev/ttyUSB0"
+    baudrate: 9600
+    address: 1
+
+    response_timeout_ms: 3000
+    poll_interval_ms: 10000
+    startup_delay_ms: 500
+
+    # BẮT BUỘC dùng chung lock với các node Modbus khác
+    bus_lock_file: "/tmp/rs485_modbus_bus.lock"
+
+    sensor_name: "H2S"
+    sensor_model: "SEN0467"
+    quantity: "hydrogen_sulfide"
+    unit: "ppm"
+    topic_name: "/sensors/h2s"
+    notes: "DFRobot SEN0467 UART protocol sharing one RS485 bus"
+
+    warning_threshold: 5.0
+    alarm_threshold: 10.0
+    enabled: true

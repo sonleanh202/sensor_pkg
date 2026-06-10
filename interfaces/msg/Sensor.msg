@@ -5,6 +5,7 @@ string quantity
 float64 value
 string unit
 int32 raw_value
+bool alarm
 uint16 slave_id
 string port
 string notes
