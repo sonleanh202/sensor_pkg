@@ -1,0 +1,16 @@
+h2s_arduino_node:
+  ros__parameters:
+    # Đổi port này theo Arduino Nano thực tế của bạn.
+    # Kiểm tra bằng: ls -l /dev/serial/by-id/
+    port: "/dev/ttyUSB1"
+    baudrate: 9600
+    topic_name: "/sensor/h2s"
+
+    sensor_name: "H2S"
+    sensor_model: "SEN0568 + Arduino Nano"
+
+    # SEN0568 chỉ là ppm ước lượng nếu chưa calibrate khí chuẩn.
+    warning_threshold_ppm: 5.0
+    alarm_threshold_ppm: 10.0
+    read_interval_ms: 100
+    enabled: true
